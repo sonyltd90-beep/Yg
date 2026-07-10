@@ -1,0 +1,491 @@
+<!-- sime-premium-player.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Siam Premium Player Pro</title>
+    <style>
+        :root {
+            --bg-black: #000000;
+            --surface: #0f1015;
+            --surface-card: #161823;
+            --accent-red: #ff003c;
+            --accent-blue: #0076ff;
+            --text-main: #ffffff;
+            --text-dim: #aaaaaa;
+            --border: #222533;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-black);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* প্রিমিয়াম মিনিমালিস্ট হেডার */
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(12px);
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header h1 span {
+            color: var(--accent-red);
+        }
+
+        /* সিস্টেম পারমিশন সিমুলেশন স্ক্রিন */
+        .permission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-black);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .permission-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .permission-btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 30px;
+            margin-top: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 118, 255, 0.4);
+        }
+
+        /* ইউটিউব স্টাইল ভিডিও গ্রিড */
+        .video-container {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .yt-card {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .yt-card:active {
+            transform: scale(0.98);
+        }
+
+        .thumbnail-placeholder {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: linear-gradient(135deg, #1c1e2e, #0f1015);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .thumbnail-placeholder svg {
+            width: 48px;
+            height: 48px;
+            fill: rgba(255, 255, 255, 0.2);
+        }
+
+        .duration-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .video-details {
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .video-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--border);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--text-dim);
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .video-text {
+            flex: 1;
+        }
+
+        .video-title {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-meta {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        /* ফুল স্ক্রিন অ্যাডভান্সড প্লেয়ার থিয়েটার */
+        .main-player-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .viewport-container {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            position: relative;
+            background: #000;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* কাস্টম ওএসডি (On Screen Display) */
+        .osd-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85);
+            padding: 10px 22px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 220;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+        }
+
+        /* ইনভিজিবল টাচ জোন (ডাবল ট্যাপ জেশ্চার) */
+        .touch-zones {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            z-index: 210;
+        }
+
+        .zone-left, .zone-right {
+            flex: 1;
+            height: 100%;
+        }
+
+        /* টপ প্লেয়ার ওভারলে কন্ট্রোল */
+        .player-top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 235;
+        }
+
+        .close-player-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* বটম রানিং কন্ট্রোলস চিপস */
+        .player-bottom-controls {
+            padding: 16px;
+            background: var(--surface);
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            border-top: 1px solid var(--border);
+        }
+        .player-bottom-controls::-webkit-scrollbar { display: none; }
+
+        .control-chip {
+            background-color: var(--surface-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- মিডিয়া অ্যাক্সেস পারমিশন গেটওয়ে -->
+    <div class="permission-overlay" id="permissionScreen">
+        <div class="permission-icon">📁</div>
+        <h2>Allow System Media Access</h2>
+        <p style="color: var(--text-dim); margin-top: 8px; font-size: 14px; max-width: 300px; line-height: 1.5;">
+            Grant permission to automatically sync, scan, and render your phone's offline video media library.
+        </p>
+        <button class="permission-btn" onclick="triggerNativeStorageScan()">Allow & Scan</button>
+    </div>
+
+    <!-- মেইন অ্যাপ্লিকেশন ইন্টারফেস -->
+    <header>
+        <h1>Premium<span>Stream</span></h1>
+        <div style="font-size: 12px; color: var(--text-dim); background: var(--surface); padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border);" id="mediaCount">0 Videos</div>
+    </header>
+
+    <!-- ইউটিউব ফিড স্টাইল লিস্ট গ্রিড -->
+    <div class="video-container" id="videoFeed">
+        <!-- জাভাস্ক্রিপ্ট দ্বারা ডাইনামিক মিডিয়া ফিড রেন্ডার হবে -->
+    </div>
+
+    <!-- ফুল স্ক্রিন প্রিমিয়াম প্লেয়ার থিয়েটার ইঞ্জিন -->
+    <div class="main-player-wrapper" id="playerOverlay">
+        
+        <!-- টপ অ্যাকশন বার -->
+        <div class="player-top-bar">
+            <button class="close-player-btn" onclick="closeAdvancedPlayer()">✕ Close Player</button>
+            <span id="nowPlayingTitle" style="font-size: 12px; font-weight: 500; color: var(--text-dim); max-width: 50%;">Streaming...</span>
+        </div>
+
+        <!-- প্লেয়ার ভিউপোর্ট কোর -->
+        <div class="viewport-container" id="viewportContainer">
+            <video id="nativeVideoCore" controls autoplay></video>
+            
+            <!-- অন স্ক্রিন ওএসডি অ্যালার্ট ইন্ডিকেটর -->
+            <div class="osd-overlay" id="osdAlert">1.0x Speed</div>
+
+            <!-- জেশ্চার কন্ট্রোল ডিটেকশন টাচ জোনসমূহ -->
+            <div class="touch-zones">
+                <div class="zone-left" id="leftTouchZone"></div>
+                <div class="zone-right" id="rightTouchZone"></div>
+            </div>
+        </div>
+
+        <!-- বটম চিপস প্যানেল কন্ট্রোল -->
+        <div class="player-bottom-controls">
+            <button class="control-chip" id="aspectBtn" onclick="cycleAspectRatio()">Aspect: FIT</button>
+            <button class="control-chip" id="speedBtn" onclick="cyclePlaybackSpeed()">Speed: 1.0x</button>
+            <button class="control-chip" id="loopBtn" onclick="toggleLoopMode()">Loop: OFF</button>
+        </div>
+    </div>
+
+    <script>
+        const videoFeed = document.getElementById('videoFeed');
+        const permissionScreen = document.getElementById('permissionScreen');
+        const mediaCount = document.getElementById('mediaCount');
+        const playerOverlay = document.getElementById('playerOverlay');
+        const nativeVideoCore = document.getElementById('nativeVideoCore');
+        const nowPlayingTitle = document.getElementById('nowPlayingTitle');
+        const osd = document.getElementById('osdAlert');
+
+        let currentSpeedIdx = 1;
+        let currentRatioIdx = 0;
+        let loopActive = false;
+
+        // ১. রানটাইম স্টোরেজ অ্যাক্সেস এবং ফাইল ইনডেক্সিং
+        function triggerNativeStorageScan() {
+            const inputBroker = document.createElement('input');
+            inputBroker.type = 'file';
+            inputBroker.multiple = true;
+            inputBroker.accept = 'video/*';
+            
+            inputBroker.onchange = (e) => {
+                const files = Array.from(e.target.files);
+                if(files.length > 0) {
+                    permissionScreen.style.display = 'none';
+                    generateYouTubeFeed(files);
+                }
+            };
+            inputBroker.click();
+        }
+
+        // ২. ইউটিউব ডিজাইনে মিডিয়া কার্ডস রেন্ডারিং মেকানিজম
+        function generateYouTubeFeed(videoFiles) {
+            videoFeed.innerHTML = '';
+            mediaCount.innerText = `${videoFiles.length} Videos`;
+
+            videoFiles.forEach((file) => {
+                const videoUrl = URL.createObjectURL(file);
+                const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                const cleanName = file.name.replace(/\.[^/.]+$/, "");
+
+                const card = document.createElement('div');
+                card.className = 'yt-card';
+                card.onclick = () => launchAdvancedPlayer(videoUrl, cleanName);
+
+                card.innerHTML = `
+                    <div class="thumbnail-placeholder">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <div class="duration-badge">${fileSizeMB} MB</div>
+                    </div>
+                    <div class="video-details">
+                        <div class="video-avatar">${cleanName.charAt(0)}</div>
+                        <div class="video-text">
+                            <div class="video-title">${cleanName}</div>
+                            <div class="video-meta">Device Storage • Native Core Stream</div>
+                        </div>
+                    </div>
+                `;
+                videoFeed.appendChild(card);
+            });
+        }
+
+        // ৩. অ্যাডভান্সড প্লেয়ার এক্সিকিউশন
+        function launchAdvancedPlayer(sourceUrl, name) {
+            playerOverlay.style.display = 'flex';
+            nowPlayingTitle.innerText = name;
+            nativeVideoCore.src = sourceUrl;
+            nativeVideoCore.play();
+            
+            if (nativeVideoCore.requestFullscreen) {
+                nativeVideoCore.requestFullscreen().catch(() => {});
+            }
+        }
+
+        function closeAdvancedPlayer() {
+            playerOverlay.style.display = 'none';
+            nativeVideoCore.pause();
+            nativeVideoCore.src = "";
+        }
+
+        // ৪. ওএসডি অ্যালার্ট পপআপ
+        function triggerOSD(text) {
+            osd.innerText = text;
+            osd.style.opacity = '1';
+            clearTimeout(window.osdTimeout);
+            window.osdTimeout = setTimeout(() => {
+                osd.style.opacity = '0';
+            }, 1000);
+        }
+
+        // ৫. জেশ্চার ইমপ্লিমেন্টেশন: ডাবল ট্যাপ টু সিক (Forward/Backward)
+        let lastLeftTap = 0;
+        document.getElementById('leftTouchZone').addEventListener('click', () => {
+            const now = Date.now();
+            if (now - lastLeftTap < 300) {
+                nativeVideoCore.currentTime = Math.max(0, nativeVideoCore.currentTime - 10);
+                triggerOSD(" rewind -10s ");
+            }
+            lastLeftTap = now;
+        });
+
+        let lastRightTap = 0;
+        document.getElementById('rightTouchZone').addEventListener('click', () => {
+            const now = Date.now();
+            if (now - lastRightTap < 300) {
+                nativeVideoCore.currentTime = Math.min(nativeVideoCore.duration, nativeVideoCore.currentTime + 10);
+                triggerOSD(" forward +10s ");
+            }
+            lastRightTap = now;
+        });
+
+        // ৬. অ্যাসপেক্ট রেশিও কনফিগারেশন
+        const ratios = ['contain', 'cover', 'fill'];
+        function cycleAspectRatio() {
+            currentRatioIdx = (currentRatioIdx + 1) % ratios.length;
+            nativeVideoCore.style.objectFit = ratios[currentRatioIdx];
+            document.getElementById('aspectBtn').innerText = `Aspect: ${ratios[currentRatioIdx].toUpperCase()}`;
+            triggerOSD(`Aspect: ${ratios[currentRatioIdx].toUpperCase()}`);
+        }
+
+        // ৭. প্লেব্যাক স্পীড ইঞ্জেকশন
+        const speeds = [0.5, 1.0, 1.5, 2.0];
+        function cyclePlaybackSpeed() {
+            currentSpeedIdx = (currentSpeedIdx + 1) % speeds.length;
+            nativeVideoCore.playbackRate = speeds[currentSpeedIdx];
+            document.getElementById('speedBtn').innerText = `Speed: ${speeds[currentSpeedIdx]}x`;
+            triggerOSD(`Speed: ${speeds[currentSpeedIdx]}x`);
+        }
+
+        // ৮. ভিডিও লুপ টগল মোড
+        function toggleLoopMode() {
+            loopActive = !loopActive;
+            nativeVideoCore.loop = loopActive;
+            document.getElementById('loopBtn').innerText = `Loop: ${loopActive ? 'ON' : 'OFF'}`;
+            triggerOSD(`Loop: ${loopActive ? 'Enabled' : 'Disabled'}`);
+        }
+    </script>
+</body>
+  </html>
