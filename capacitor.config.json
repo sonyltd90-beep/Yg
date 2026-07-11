@@ -1,0 +1,8 @@
+{
+  "appId": "com.siam.premiumplayer",
+  "appName": "SIAM STRIM",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
